@@ -166,6 +166,51 @@ class AgentConfig:
     scripter: ScripterConfig = field(default_factory=ScripterConfig)
     app_cards: AppCardConfig = field(default_factory=AppCardConfig)
 
+    def __post_init__(self):
+        """Validate configuration and warn about potential conflicts."""
+        import logging
+        logger = logging.getLogger("droidrun")
+        
+        # Check for vision setting conflicts
+        if self.interaction_mode == InteractionMode.TEXT:
+            # TEXT mode should not have vision enabled on agents
+            conflicting_agents = []
+            if self.codeact.vision is True:
+                conflicting_agents.append("codeact")
+            if self.manager.vision is True:
+                conflicting_agents.append("manager")
+            if self.executor.vision is True:
+                conflicting_agents.append("executor")
+            
+            if conflicting_agents:
+                logger.warning(
+                    f"⚠️  Config conflict: interaction_mode=text but vision=true "
+                    f"on agents: {', '.join(conflicting_agents)}. "
+                    f"Per-agent vision settings will override interaction_mode default."
+                )
+        
+        # Check for coordinate mode without vision
+        if self.interaction_mode in (
+            InteractionMode.VISION_COORDINATE,
+            InteractionMode.VISION_HYBRID
+        ):
+            # Coordinate modes require vision for accurate clicking
+            agents_without_vision = []
+            if self.codeact.vision is False:
+                agents_without_vision.append("codeact")
+            if self.manager.vision is False:
+                agents_without_vision.append("manager")
+            if self.executor.vision is False:
+                agents_without_vision.append("executor")
+            
+            if agents_without_vision:
+                logger.warning(
+                    f"⚠️  Config warning: {self.interaction_mode.value} mode works best "
+                    f"with vision enabled, but vision=false on agents: "
+                    f"{', '.join(agents_without_vision)}. "
+                    f"Coordinate-based clicking may be less accurate without visual verification."
+                )
+
     @property
     def click_mode(self) -> ClickMode:
         """Get click mode derived from interaction_mode."""

@@ -378,9 +378,23 @@ async def click_at(x: int, y: int, *, tools: "Tools" = None, **kwargs) -> str:
 
     Returns:
         Result message from the tap operation
+        
+    Raises:
+        ValueError: If tools is None or coordinates are out of range
     """
     if tools is None:
         raise ValueError("tools parameter is required")
+    
+    # Validate coordinate ranges
+    if not (0 <= x <= 1000):
+        raise ValueError(
+            f"X coordinate ({x}) out of valid range [0, 1000]"
+        )
+    if not (0 <= y <= 1000):
+        raise ValueError(
+            f"Y coordinate ({y}) out of valid range [0, 1000]"
+        )
+    
     return await tools.tap_by_normalized_coordinate(x, y)
 
 
@@ -402,9 +416,32 @@ async def click_area(
 
     Returns:
         Result message from the tap operation
+        
+    Raises:
+        ValueError: If tools is None or coordinates are invalid
     """
     if tools is None:
         raise ValueError("tools parameter is required")
+    
+    # Validate area bounds
+    if x1 > x2:
+        raise ValueError(
+            f"Invalid area: x1 ({x1}) > x2 ({x2}). "
+            "Top-left X must be <= bottom-right X"
+        )
+    if y1 > y2:
+        raise ValueError(
+            f"Invalid area: y1 ({y1}) > y2 ({y2}). "
+            "Top-left Y must be <= bottom-right Y"
+        )
+    
+    # Validate coordinate ranges
+    for name, val in [("x1", x1), ("y1", y1), ("x2", x2), ("y2", y2)]:
+        if not (0 <= val <= 1000):
+            raise ValueError(
+                f"Coordinate {name}={val} out of valid range [0, 1000]"
+            )
+    
     return await tools.tap_normalized_area(x1, y1, x2, y2)
 
 

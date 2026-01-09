@@ -66,6 +66,25 @@ class MacroPlayer:
         """
         return Trajectory.load_macro_sequence(trajectory_folder)
 
+    def _validate_action_params(
+        self, action: Dict[str, Any], required_params: list, action_type: str
+    ) -> tuple[bool, str]:
+        """
+        Validate that required parameters exist in action.
+        
+        Args:
+            action: Action dictionary
+            required_params: List of required parameter names
+            action_type: Action type for error messages
+            
+        Returns:
+            (is_valid, error_message) tuple
+        """
+        missing = [p for p in required_params if p not in action or action[p] is None]
+        if missing:
+            return False, f"Missing required parameters for {action_type}: {missing}"
+        return True, ""
+
     async def replay_action(self, action: Dict[str, Any]) -> bool:
         """
         Replay a single action.
@@ -81,6 +100,12 @@ class MacroPlayer:
 
         try:
             if action_type == "start_app":
+                valid, error = self._validate_action_params(
+                    action, ["package"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
                 package = action.get("package")
                 activity = action.get("activity", None)
                 await tools.start_app(package, activity)
@@ -91,6 +116,13 @@ class MacroPlayer:
                 # - tap: index-based click (converted to coordinates)
                 # - tap_coordinate: normalized coordinate click
                 # - tap_area: normalized area center click
+                valid, error = self._validate_action_params(
+                    action, ["x", "y"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
+                    
                 x = action.get("x", 0)
                 y = action.get("y", 0)
                 element_text = action.get("element_text", "")
@@ -101,6 +133,13 @@ class MacroPlayer:
                 return True
 
             elif action_type == "swipe":
+                valid, error = self._validate_action_params(
+                    action, ["start_x", "start_y", "end_x", "end_y"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
+                    
                 start_x = action.get("start_x", 0)
                 start_y = action.get("start_y", 0)
                 end_x = action.get("end_x", 0)
@@ -117,6 +156,13 @@ class MacroPlayer:
                 return True
 
             elif action_type == "drag":
+                valid, error = self._validate_action_params(
+                    action, ["start_x", "start_y", "end_x", "end_y"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
+                    
                 start_x = action.get("start_x", 0)
                 start_y = action.get("start_y", 0)
                 end_x = action.get("end_x", 0)
@@ -133,6 +179,13 @@ class MacroPlayer:
                 return True
 
             elif action_type == "input_text":
+                valid, error = self._validate_action_params(
+                    action, ["text"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
+                    
                 text = action.get("text", "")
 
                 logger.info(f"⌨️  Inputting text: '{text}'")
@@ -141,6 +194,13 @@ class MacroPlayer:
                 return True
 
             elif action_type == "key_press":
+                valid, error = self._validate_action_params(
+                    action, ["keycode"], action_type
+                )
+                if not valid:
+                    logger.error(f"❌ {error}")
+                    return False
+                    
                 keycode = action.get("keycode", 0)
                 key_name = action.get("key_name", "UNKNOWN")
 

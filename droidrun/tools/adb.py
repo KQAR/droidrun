@@ -370,8 +370,11 @@ class AdbTools(Tools):
 
             abs_x, abs_y = normalized_to_absolute(norm_x, norm_y, self._screen_size)
 
+            logger.debug(
+                f"🎯 Coordinate click: normalized ({norm_x}, {norm_y}) -> "
+                f"absolute ({abs_x}, {abs_y}) on screen {self._screen_size.width}x{self._screen_size.height}"
+            )
             await self.device.click(abs_x, abs_y)
-            print(f"Tapped at normalized ({norm_x}, {norm_y}) -> absolute ({abs_x}, {abs_y})")
 
             # Emit tap event for trajectory recording
             if self._ctx:
@@ -389,7 +392,10 @@ class AdbTools(Tools):
             return f"Tapped at normalized ({norm_x}, {norm_y}) -> absolute ({abs_x}, {abs_y})"
 
         except ValueError as e:
-            return f"Error: {str(e)}"
+            screen_info = ""
+            if hasattr(self, '_screen_size') and self._screen_size:
+                screen_info = f" Screen resolution: {self._screen_size.width}x{self._screen_size.height}"
+            return f"Error: Coordinate click failed - {str(e)}.{screen_info}"
 
     @Tools.ui_action
     async def tap_normalized_area(
@@ -418,8 +424,11 @@ class AdbTools(Tools):
 
             abs_x, abs_y = normalized_area_to_center(x1, y1, x2, y2, self._screen_size)
 
+            logger.debug(
+                f"🎯 Area click: area ({x1},{y1})-({x2},{y2}) -> "
+                f"center ({abs_x}, {abs_y}) on screen {self._screen_size.width}x{self._screen_size.height}"
+            )
             await self.device.click(abs_x, abs_y)
-            print(f"Tapped area center [{x1},{y1},{x2},{y2}] -> absolute ({abs_x}, {abs_y})")
 
             # Emit tap event for trajectory recording
             if self._ctx:
@@ -437,7 +446,10 @@ class AdbTools(Tools):
             return f"Tapped area center [{x1},{y1},{x2},{y2}] -> absolute ({abs_x}, {abs_y})"
 
         except ValueError as e:
-            return f"Error: {str(e)}"
+            screen_info = ""
+            if hasattr(self, '_screen_size') and self._screen_size:
+                screen_info = f" Screen resolution: {self._screen_size.width}x{self._screen_size.height}"
+            return f"Error: Area click failed for ({x1},{y1})-({x2},{y2}) - {str(e)}.{screen_info}"
 
     # Replace the old tap function with the new one
     async def tap(self, index: int) -> str:

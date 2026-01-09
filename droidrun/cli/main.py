@@ -424,6 +424,13 @@ def cli():
     help="Interaction mode: text (no vision), vision_index, vision_coordinate, or vision_hybrid",
 )
 @click.option(
+    "--vision/--no-vision",
+    "vision_flag",
+    default=None,
+    hidden=True,
+    help="[DEPRECATED] Use --interaction-mode instead. Enable vision mode.",
+)
+@click.option(
     "--reasoning/--no-reasoning", default=None, help="Enable planning with reasoning"
 )
 @click.option(
@@ -459,6 +466,7 @@ async def run(
     api_base: str | None,
     temperature: float | None,
     interaction_mode: str | None,
+    vision_flag: bool | None,
     reasoning: bool | None,
     stream: bool | None,
     tracing: bool | None,
@@ -468,6 +476,19 @@ async def run(
     ios: bool | None,
 ):
     """Run a command on your Android device using natural language."""
+    
+    # Handle deprecated --vision flag
+    if vision_flag is not None:
+        console.print(
+            "[yellow]⚠️  Warning: --vision/--no-vision is deprecated. "
+            "Use --interaction-mode instead.[/]"
+        )
+        console.print(
+            "[yellow]   Mapping: --vision → --interaction-mode=vision_index, "
+            "--no-vision → --interaction-mode=text[/]"
+        )
+        if interaction_mode is None:
+            interaction_mode = "vision_index" if vision_flag else "text"
 
     try:
         success = await run_command(
